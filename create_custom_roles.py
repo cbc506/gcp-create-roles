@@ -10,6 +10,28 @@ credentials = service_account.Credentials.from_service_account_file(
 service = googleapiclient.discovery.build(
     'iam', 'v1', credentials=credentials)
 
+# [START iam_query_testable_permissions]
+def query_testable_permissions(resource, pageSize):
+    """Lists valid permissions for a resource."""
+    listTestablePermissions = []
+    query_testable_permissions_request_body = {
+        'fullResourceName': resource,
+        "pageSize": pageSize,
+        "pageToken": ""
+    }
+    while True:
+        request = service.permissions().queryTestablePermissions(body=query_testable_permissions_request_body)
+        response = request.execute()
+
+        for permission in response.get('permissions', []):
+            # TODO: Change code below to process each `permission` resource:
+            listTestablePermissions.append((permission['name']))
+
+        if 'nextPageToken' not in response:
+            break
+        query_testable_permissions_request_body['pageToken'] = response['nextPageToken']
+    return listTestablePermissions
+# [END iam_query_testable_permissions]
 
 def get_permissions(_listRole):
 
@@ -28,7 +50,7 @@ def get_permissions(_listRole):
             print ("There are not roles for %s " % temp)
         
         #print _listRolePermission[i]
-    print (_listRolePermission)
+    
     return _listRolePermission
 
 def get_role(name):
@@ -74,11 +96,26 @@ def readRoleFile():
             line = line.replace("\n", "")
             if line:
                 yield line
+def comparePermissions(listRequested, listAvailable):
+
+    listCommonPermissions = set(listRequested).intersection(set(listAvailable))
+
+    return (list(listCommonPermissions))
+
+
 
 def main():
-    listPermissions = get_permissions(readRoleFile())
+    #listPermissions = get_permissions(readRoleFile())
     #create_role("testrole2","backcountry-data-team","Test Role2" ,"test",["bigtable.appProfiles.get","bigtable.appProfiles.list"], "ALPHA")
-    #create_role("testrole3","backcountry-data-team","Test Role3" ,"test",listPermissions, "ALPHA")
+    
+    listA = []
+    listB = []
+    listC = []
+    listPermissions = []
+    listA = query_testable_permissions("//cloudresourcemanager.googleapis.com/projects/backcountry-data-team", 1000)
+    listB = get_permissions(readRoleFile())
+    listPermissions = comparePermissions(listA, listB)
+    create_role("testrole3","backcountry-data-team","Test Role3" ,"test",listPermissions, "ALPHA")
 
     '''parser = argparse.ArgumentParser(
         description=__doc__,
