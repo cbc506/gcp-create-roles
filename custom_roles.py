@@ -33,7 +33,7 @@ credentials = service_account.Credentials.from_service_account_file(
 service = googleapiclient.discovery.build(
     'iam', 'v1', credentials=credentials)
 
-
+'''
 # [START iam_query_testable_permissions]
 def query_testable_permissions(resource):
     """Lists valid permissions for a resource."""
@@ -45,7 +45,36 @@ def query_testable_permissions(resource):
     for p in permissions:
         print(p['name'])
 # [END iam_query_testable_permissions]
+'''
+# [START iam_query_testable_permissions]
+def query_testable_permissions(resource, pageSize):
+    """Lists valid permissions for a resource."""
 
+    # pylint: disable=no-member
+    '''permissions = service.permissions().queryTestablePermissions(body={
+        'fullResourceName': resource,
+        "pageSize": pageSize
+    }).execute()['permissions']
+    for p in permissions:
+        print(p)
+    '''
+    query_testable_permissions_request_body = {
+        'fullResourceName': resource,
+        "pageSize": pageSize,
+        "pageToken": ""
+    }
+    while True:
+        request = service.permissions().queryTestablePermissions(body=query_testable_permissions_request_body)
+        response = request.execute()
+
+        for permission in response.get('permissions', []):
+            # TODO: Change code below to process each `permission` resource:
+            print(permission)
+
+        if 'nextPageToken' not in response:
+            break
+        query_testable_permissions_request_body['pageToken'] = response['nextPageToken']
+# [END iam_query_testable_permissions]
 
 # [START iam_get_role]
 def get_role(name):
@@ -56,6 +85,17 @@ def get_role(name):
     print(role['name'])
     for permission in role['includedPermissions']:
         print(permission)
+# [END iam_get_role]
+
+# [START iam_get_role]
+def get_role2(name):
+    """Gets a role."""
+
+    # pylint: disable=no-member
+    role = service.roles().get(name=name).execute()
+    print(role['name'])
+    for permission in role['includedPermissions']:
+        yield permission
 # [END iam_get_role]
 
 
@@ -168,6 +208,7 @@ def main():
     view_permissions_parser = subparsers.add_parser(
         'permissions', help=query_testable_permissions.__doc__)
     view_permissions_parser.add_argument('resource')
+    view_permissions_parser.add_argument('pageSize')
 
     # Get
     get_role_parser = subparsers.add_parser('get', help=get_role.__doc__)
@@ -215,7 +256,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'permissions':
-        query_testable_permissions(args.resource)
+        query_testable_permissions(args.resource, args.pageSize)
     elif args.command == 'get':
         get_role(args.name)
     elif args.command == 'list':

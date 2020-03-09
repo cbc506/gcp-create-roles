@@ -1,0 +1,6 @@
+title: "Data Scientist"
+description: "Role for Data Scientists"
+stage: "ALPHA"
+includedPermissions:
+- iam.roles.get
+- iam.roles.list
