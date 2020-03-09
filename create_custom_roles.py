@@ -14,6 +14,7 @@ service = googleapiclient.discovery.build(
 def query_testable_permissions(resource, pageSize):
     """Lists valid permissions for a resource."""
     listTestablePermissions = []
+    resource = "//cloudresourcemanager.googleapis.com/projects/" + resource
     query_testable_permissions_request_body = {
         'fullResourceName': resource,
         "pageSize": pageSize,
@@ -37,9 +38,7 @@ def get_permissions(_listRole):
 
     _listPermissions = []
     _listRolePermission = []
-    #_listRole.pop()
     _filteredListRole = list(_listRole)
-    #print _filteredListRole
     
     for temp in _filteredListRole:
        
@@ -48,8 +47,6 @@ def get_permissions(_listRole):
             _listRolePermission += [line.strip() for line in rolesByTemp]
         else:
             print ("There are not roles for %s " % temp)
-        
-        #print _listRolePermission[i]
     
     return _listRolePermission
 
@@ -58,7 +55,6 @@ def get_role(name):
 
     # pylint: disable=no-member
     role = service.roles().get(name=name).execute()
-    print(role['name'])
     for permission in role['includedPermissions']:
         yield permission
 # [END iam_get_role]
@@ -85,39 +81,40 @@ def create_role(name, project, title, description, permissions, stage):
     return role
 # [END iam_create_role]
 
-def create_custom_role(_listCustomPermissions, name, project, title, description, permissions, stage):
-
-    for i in _listCustomPermissions:
-        pass
-
-def readRoleFile():
-    with open("/Users/cmora/Desktop/code/gcp-create-roles/testRoles.txt", "r") as roleFile:
+def readRoleFile(path):
+    with open(path, "r") as roleFile:
         for line in roleFile:
             line = line.replace("\n", "")
             if line:
                 yield line
-def comparePermissions(listRequested, listAvailable):
+def compareCommonPermissions(listRequested, listAvailable):
+    
+    listCommonPermissions = list(set(listRequested).intersection(set(listAvailable)))
 
-    listCommonPermissions = set(listRequested).intersection(set(listAvailable))
+    return (listCommonPermissions)
 
-    return (list(listCommonPermissions))
+def compareDifferentPermissions(listRequested, listAvailable):
 
+    listDifferentPermissions = list(set(listAvailable).difference(set(listRequested)))
 
+    #print ("The set of permissions that are not available for custom roles is :" + str(listDifferentPermissions))
+    #print ("The length of the set of permissions that are not available for custom roles is: " + str(len(listDifferentPermissions)))
+    return listDifferentPermissions
 
 def main():
     #listPermissions = get_permissions(readRoleFile())
     #create_role("testrole2","backcountry-data-team","Test Role2" ,"test",["bigtable.appProfiles.get","bigtable.appProfiles.list"], "ALPHA")
     
-    listA = []
-    listB = []
-    listC = []
+    listATestablePermissions = []
+    listDesiredPermissions = []
     listPermissions = []
-    listA = query_testable_permissions("//cloudresourcemanager.googleapis.com/projects/backcountry-data-team", 1000)
-    listB = get_permissions(readRoleFile())
-    listPermissions = comparePermissions(listA, listB)
-    create_role("testrole3","backcountry-data-team","Test Role3" ,"test",listPermissions, "ALPHA")
+    '''listTestablePermissions = query_testable_permissions("backcountry-data-team", 1000)
+    listDesiredPermissions = get_permissions(readRoleFile())
+    listActualPermissions = compareCommonPermissions(listTestablePermissions, listDesiredPermissions)
+    print (listActualPermissions)'''
+    #create_role("testrole3","backcountry-data-team","Test Role3" ,"test",listPermissions, "ALPHA")
 
-    '''parser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
@@ -127,6 +124,7 @@ def main():
     view_permissions_parser = subparsers.add_parser(
         'permissions', help=query_testable_permissions.__doc__)
     view_permissions_parser.add_argument('resource')
+    view_permissions_parser.add_argument('pageSize')
 
     # Get
     get_role_parser = subparsers.add_parser('get', help=get_role.__doc__)
@@ -138,9 +136,10 @@ def main():
     get_role_parser.add_argument('project')
     get_role_parser.add_argument('title')
     get_role_parser.add_argument('description')
-    get_role_parser.add_argument('permissions')
+    get_role_parser.add_argument('path_file_permissions')
     get_role_parser.add_argument('stage')
 
+    '''
     # Edit
     edit_role_parser = subparsers.add_parser('edit', help=create_role.__doc__)
     edit_role_parser.add_argument('name')
@@ -170,19 +169,24 @@ def main():
         'undelete', help=get_role.__doc__)
     undelete_role_parser.add_argument('name')
     undelete_role_parser.add_argument('project')
+    '''
 
     args = parser.parse_args()
 
     if args.command == 'permissions':
-        query_testable_permissions(args.resource)
+        query_testable_permissions(args.resource, args.pageSize)
     elif args.command == 'get':
         get_role(args.name)
-    elif args.command == 'list':
-        list_roles(args.project_id)
     elif args.command == 'create':
+        listTestablePermissions = query_testable_permissions(args.project, 1000)
+        listDesiredPermissions = get_permissions(readRoleFile(args.path_file_permissions))
+        listActualPermissions = compareCommonPermissions(listTestablePermissions, listDesiredPermissions)
+        print (compareDifferentPermissions(listTestablePermissions, listDesiredPermissions))
         create_role(
             args.name, args.project, args.title,
-            args.description, args.permissions, args.stage)
+            args.description, listActualPermissions, args.stage)
+    '''elif args.command == 'list':
+        list_roles(args.project_id)
     elif args.command == 'edit':
         edit_role(
             args.name, args.project, args.title,
