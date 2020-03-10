@@ -54,8 +54,7 @@ def get_permissions(_listRole):
             _listRolePermission += [line.strip() for line in rolesByTemp]
         else:
             print ("There are not roles for %s " % temp)
-    
-    print(" printing after getting all roles, this is the list : " + str(_listRolePermission))
+
     return _listRolePermission
 
 def get_role(name):
@@ -123,9 +122,6 @@ def main():
         listATestablePermissions = []
         listDesiredPermissions = []
         listPermissions = []
-        listTestablePermissions = query_testable_permissions("backcountry-data-team", 1000)
-        listDesiredPermissions = get_permissions(readRoleFile("/Users/cmora/Desktop/code/gcp-create-roles/dataScientistRole.txt"))
-        listActualPermissions = compareCommonPermissions(listTestablePermissions, listDesiredPermissions) 
 
         parser = argparse.ArgumentParser(
             description=__doc__,
