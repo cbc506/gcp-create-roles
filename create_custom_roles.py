@@ -25,8 +25,6 @@ def query_testable_permissions(resource, pageSize):
         response = request.execute()
         
         for permission in response.get('permissions', []):
-            # TODO: Change code below to process each `permission` resource:
-            #print(permission['customRolesSupportLevel'])
             
             if 'customRolesSupportLevel' in permission.keys():
                 if "NOT_SUPPORTED" not in permission['customRolesSupportLevel']:
@@ -39,7 +37,7 @@ def query_testable_permissions(resource, pageSize):
         if 'nextPageToken' not in response:
             break
         query_testable_permissions_request_body['pageToken'] = response['nextPageToken']
-    #print(listTestablePermissions)
+
     return listTestablePermissions
 # [END iam_query_testable_permissions]
 
@@ -48,7 +46,6 @@ def get_permissions(_listRole):
     _listPermissions = []
     _listRolePermission = []
     _filteredListRole = filter(None, _listRole)
-    #print(_filteredListRole)
     for temp in _filteredListRole:
        
         rolesByTemp = get_role(temp)
@@ -119,25 +116,16 @@ def compareDifferentPermissions(listRequested, listAvailable):
 
     listDifferentPermissions = list(set(listAvailable).difference(set(listRequested)))
 
-    #print ("The set of permissions that are not available for custom roles is :" + str(listDifferentPermissions))
-    #print ("The length of the set of permissions that are not available for custom roles is: " + str(len(listDifferentPermissions)))
     return ("The set of permissions that are not available for custom roles is : " + str(listDifferentPermissions))
 
 def main():
     try:
-        #listPermissions = get_permissions(readRoleFile())
-        #create_role("testrole2","backcountry-data-team","Test Role2" ,"test",["bigtable.appProfiles.get","bigtable.appProfiles.list"], "ALPHA")
         listATestablePermissions = []
         listDesiredPermissions = []
         listPermissions = []
-        '''listTestablePermissions = query_testable_permissions("backcountry-data-team", 1000)
-        listDesiredPermissions = get_permissions(readRoleFile())
-        listActualPermissions = compareCommonPermissions(listTestablePermissions, listDesiredPermissions)
-        print (listActualPermissions)'''
         listTestablePermissions = query_testable_permissions("backcountry-data-team", 1000)
         listDesiredPermissions = get_permissions(readRoleFile("/Users/cmora/Desktop/code/gcp-create-roles/dataScientistRole.txt"))
         listActualPermissions = compareCommonPermissions(listTestablePermissions, listDesiredPermissions) 
-        #create_role("dataScientistRole","backcountry-data-team","Data Scientist Role" ,"Custom role for data scientists",listActualPermissions, "ALPHA")
 
         parser = argparse.ArgumentParser(
             description=__doc__,
