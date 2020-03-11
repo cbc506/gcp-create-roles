@@ -11,10 +11,10 @@ service = googleapiclient.discovery.build(
     'iam', 'v1', credentials=credentials)
 
 # [START iam_query_testable_permissions]
-def query_testable_permissions(resource, pageSize):
+def query_testable_permissions(entity, resource, pageSize):
     """Lists valid permissions for a resource."""
     listTestablePermissions = []
-    resource = "//cloudresourcemanager.googleapis.com/projects/" + resource
+    resource = "//cloudresourcemanager.googleapis.com/" + entity + "/" + resource
     query_testable_permissions_request_body = {
         'fullResourceName': resource,
         "pageSize": pageSize,
@@ -73,13 +73,13 @@ def get_role(name):
 # [END iam_get_role]
 
 # [START iam_create_role]
-def create_role(name, project, title, description, permissions, stage):
+def create_role(entity, entity_id,name, title, description, permissions, stage):
     try:
         """Creates a role."""
 
         # pylint: disable=no-member
         role = service.projects().roles().create(
-            parent='projects/' + project,
+            parent= entity + '/' + entity_id,
 
             body={
                 'roleId': name,
@@ -132,6 +132,7 @@ def main():
         # Permissions
         view_permissions_parser = subparsers.add_parser(
             'permissions', help=query_testable_permissions.__doc__)
+        view_permissions_parser.add_argument('entity')
         view_permissions_parser.add_argument('resource')
         view_permissions_parser.add_argument('pageSize')
 
@@ -141,8 +142,9 @@ def main():
 
         # Create
         get_role_parser = subparsers.add_parser('create', help=create_role.__doc__)
+        get_role_parser.add_argument('entity', choices=["organization","project"])
+        get_role_parser.add_argument('entity_id')
         get_role_parser.add_argument('name')
-        get_role_parser.add_argument('project')
         get_role_parser.add_argument('title')
         get_role_parser.add_argument('description')
         get_role_parser.add_argument('path_file_permissions')
@@ -183,16 +185,16 @@ def main():
         args = parser.parse_args()
 
         if args.command == 'permissions':
-            query_testable_permissions(args.resource, args.pageSize)
+            query_testable_permissions(args.entity, args.resource, args.pageSize)
         elif args.command == 'get':
             get_role(args.name)
         elif args.command == 'create':
-            listTestablePermissions = query_testable_permissions(args.project, 1000)
+            listTestablePermissions = query_testable_permissions(args.entity, args.entity_id, 1000)
             listDesiredPermissions = get_permissions(readRoleFile(args.path_file_permissions))
             listActualPermissions = compareCommonPermissions(listTestablePermissions, listDesiredPermissions)
             
             create_role(
-                args.name, args.project, args.title,
+                args.entity, args.entity_id, args.name, args.title,
                 args.description, listActualPermissions, args.stage)
         '''elif args.command == 'list':
             list_roles(args.project_id)
