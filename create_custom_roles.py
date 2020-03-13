@@ -142,7 +142,7 @@ def main():
             formatter_class=argparse.RawDescriptionHelpFormatter)
 
         subparsers = parser.add_subparsers(dest='command')
-        #query_testable_permissions("projects","backcountry-data-team",1000)
+        
 
         # Permissions
         view_permissions_parser = subparsers.add_parser(
