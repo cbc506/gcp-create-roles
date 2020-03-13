@@ -22,6 +22,24 @@ GOOGLE_APPLICATION_CREDENTIALS environment variable to be set to the path of the
 
 $ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/file/data-team-iamrole2.json
 
+Service account should be created in a separate project to avoid privilege escalation, and should have a role with the following permissions assigned:
+iam.roles.create
+iam.roles.delete
+iam.roles.get
+iam.roles.list
+iam.roles.undelete
+iam.roles.update
+resourcemanager.organizations.get
+resourcemanager.organizations.getIamPolicy
+resourcemanager.organizations.setIamPolicy
+resourcemanager.projects.get
+resourcemanager.projects.getIamPolicy
+resourcemanager.projects.list
+
+Service accounts can only be created at project level, but in order to create custom roles at org level you need to also follow these steps:
+
+Go to IAM & Admin -> IAM -> Click on +ADD -> Type the service account -> set the role with the permissions above and save. 
+
 
 ## Running the tests
 
