@@ -13,9 +13,10 @@ service = googleapiclient.discovery.build(
 # [START iam_query_testable_permissions]
 def query_testable_permissions(entity, resource, pageSize):
     """Lists valid permissions for a resource."""
+
     listTestablePermissions = []
-    resource = "//cloudresourcemanager.googleapis.com/" + entity + "/" + resource
-    query_testable_permissions_request_body = {
+    resource = "//cloudresourcemanager.googleapis.com/" + entity + "/" + resource 
+    query_testable_permissions_request_body = {                                    
         'fullResourceName': resource,
         "pageSize": pageSize,
         "pageToken": ""
@@ -37,7 +38,6 @@ def query_testable_permissions(entity, resource, pageSize):
         if 'nextPageToken' not in response:
             break
         query_testable_permissions_request_body['pageToken'] = response['nextPageToken']
-
     return listTestablePermissions
 # [END iam_query_testable_permissions]
 
@@ -59,17 +59,16 @@ def get_permissions(_listRole):
 
 def get_role(name):
     """Gets a role."""
-    print("****Role Name: " + name + "****")
+    print("**** Role Name: " + name + " ****")
     # pylint: disable=no-member
     role = service.roles().get(name=name).execute()
 
     if 'includedPermissions' in role:
         for permission in role['includedPermissions']:
-            yield permission
-        
+            yield permission        
     else:
         print("Role " + name + " doesn't have any permissions associated")
-
+    
 # [END iam_get_role]
 
 # [START iam_create_role]
@@ -78,18 +77,33 @@ def create_role(entity, entity_id,name, title, description, permissions, stage):
         """Creates a role."""
 
         # pylint: disable=no-member
-        role = service.projects().roles().create(
-            parent= entity + '/' + entity_id,
+        if entity == "projects":
+            role = service.projects().roles().create(
+                parent= entity + '/' + entity_id,
 
-            body={
-                'roleId': name,
-                'role': {
-                    'title': title,
-                    'description': description,
-                    'includedPermissions': permissions,
-                    'stage': stage
-                }
-            }).execute()
+                body={
+                    'roleId': name,
+                    'role': {
+                        'title': title,
+                        'description': description,
+                        'includedPermissions': permissions,
+                        'stage': stage
+                    }
+                }).execute()
+
+        elif entity == "organizations":
+            role = service.organizations().roles().create(
+                parent= entity + '/' + entity_id,
+
+                body={
+                    'roleId': name,
+                    'role': {
+                        'title': title,
+                        'description': description,
+                        'includedPermissions': permissions,
+                        'stage': stage
+                    }
+                }).execute()
 
         print('Created role: ' + role['name'])
         return role
@@ -122,12 +136,13 @@ def main():
         listATestablePermissions = []
         listDesiredPermissions = []
         listPermissions = []
-
+       
         parser = argparse.ArgumentParser(
             description=__doc__,
             formatter_class=argparse.RawDescriptionHelpFormatter)
 
         subparsers = parser.add_subparsers(dest='command')
+        #query_testable_permissions("projects","backcountry-data-team",1000)
 
         # Permissions
         view_permissions_parser = subparsers.add_parser(
@@ -184,6 +199,12 @@ def main():
 
         args = parser.parse_args()
 
+
+        if args.entity == "project":
+            args.entity = "projects"
+        elif args.entity == "organization":
+            args.entity = "organizations"
+
         if args.command == 'permissions':
             query_testable_permissions(args.entity, args.resource, args.pageSize)
         elif args.command == 'get':
@@ -192,23 +213,23 @@ def main():
             listTestablePermissions = query_testable_permissions(args.entity, args.entity_id, 1000)
             listDesiredPermissions = get_permissions(readRoleFile(args.path_file_permissions))
             listActualPermissions = compareCommonPermissions(listTestablePermissions, listDesiredPermissions)
-            
+                
             create_role(
                 args.entity, args.entity_id, args.name, args.title,
                 args.description, listActualPermissions, args.stage)
         '''elif args.command == 'list':
-            list_roles(args.project_id)
-        elif args.command == 'edit':
-            edit_role(
-                args.name, args.project, args.title,
-                args.description, args.permissions, args.stage)
-        elif args.command == 'disable':
-            disable_role(args.name, args.project)
-        elif args.command == 'delete':
-            delete_role(args.name, args.project)
-        elif args.command == 'undelete':
-            undelete_role(args.name, args.project)
-        '''
+                list_roles(args.project_id)
+            elif args.command == 'edit':
+                edit_role(
+                    args.name, args.project, args.title,
+                    args.description, args.permissions, args.stage)
+            elif args.command == 'disable':
+                disable_role(args.name, args.project)
+            elif args.command == 'delete':
+                delete_role(args.name, args.project)
+            elif args.command == 'undelete':
+                undelete_role(args.name, args.project)
+            '''
     except Exception as e:
         print(e)
     
