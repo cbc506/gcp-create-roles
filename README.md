@@ -43,8 +43,9 @@ Go to IAM & Admin -> IAM -> Click on +ADD -> Type the service account -> set the
 
 ## Running the tests
 
-python create_custom_roles.py create dataEngineerRole data-team "Data Engineer Role" "Custom role for data engineers" /path/to/file/dataEngineerRole.txt ALPHA
+python create_custom_roles.py create organization {org_id} "dataEngineerRole" "Data Engineer Role" "Custom role for data engineer" /path/to/file/dataEngineerRole.txt ALPHA
 
+python create_custom_roles.py create project {project_id} "dataEngineerRole" "Data Engineer Role" "Custom role for data engineer" /path/to/file/dataEngineerRole.txt ALPHA
 
 ## Authors
 
